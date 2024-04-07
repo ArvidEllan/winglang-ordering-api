@@ -152,4 +152,17 @@ pub class OrderService {
           body: Json.stringify(order)
         };
     });
-
+/***************************************************
+ * Setup a queue consumer
+ ***************************************************/
+    this.queue.setConsumer(inflight (message) => {
+      let orderInfo = Json.parse(message);
+      let id = orderInfo.get("id").asStr();
+      let prodId = orderInfo.get("prodId").asStr();
+      let orderQty = orderInfo.get("orderQty").asStr();
+      this.prodStorage.updateProduct(prodId, num.fromStr(orderQty));
+      this.storage.updateOrderStatus(id, "COMPLETED");
+    }, timeout: 3s);
+    
+  }
+}
