@@ -100,3 +100,61 @@ pub interface IProductStorage extends std.IResource {
         this.db.update(productId, updatedItem);
       }
   }
+
+ /***************************************************
+ * Create a ProductService Class with api endpoints
+ ***************************************************/
+ pub class ProductService {
+    pub api: cloud.Api;
+    productStorage: IProductStorage;
+  
+    new(storage: IProductStorage) {
+      this.api = new cloud.Api({
+        cors: true,
+        corsOptions: {
+          allowHeaders: ["*"],
+          allowMethods: [http.HttpMethod.POST],
+        },
+      }) as "products api";
+  
+      this.productStorage = storage;
+  
+      // API endpoints
+      this.api.post("/product", inflight (req): cloud.ApiResponse => {
+        if let body = req.body {
+          let product = Json.parse(req.body!);
+          let id = this.productStorage.add(product);
+          return {
+            status:201,
+            body: id
+          };
+        } else {
+          return {
+            status: 400,
+          };
+        }
+      });
+  
+      this.api.get("/product/:id", inflight (req): cloud.ApiResponse => {
+          let id = req.vars.get("id");
+          let product = this.productStorage.get(id);
+          return {
+            status:200,
+            body: Json.stringify(product)
+          };
+      });
+  
+      this.api.get("/products", inflight (req): cloud.ApiResponse => {
+          let products = this.productStorage.list();
+          
+          return {
+            status:200,
+            body: Json.stringify({
+              items: products
+            })
+          };
+      });
+  
+    }
+  }
+  
