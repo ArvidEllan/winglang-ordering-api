@@ -19,3 +19,14 @@ enum ColumnType {
     price: num;
     imageUrl: str;
   }
+
+  /*************************************************************************
+ * Define product interface
+ *************************************************************************/
+pub interface IProductStorage extends std.IResource {
+    inflight add(product: Json): str;
+    inflight remove(id: str): void;
+    inflight get(id: str): Product?;
+    inflight updateProduct(id: str, qty: num): void;
+    inflight list(): Array<Json>;
+  }
