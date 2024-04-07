@@ -16,3 +16,13 @@ enum OrderStatus {
   PROCESSING,
   COMPLETED
 }
+
+/*************************************************************************
+ * Define an order Item Struct
+ *************************************************************************/
+struct Order {
+  id: str;
+  productId: str;
+  qty: num;
+  status: str;
+}
