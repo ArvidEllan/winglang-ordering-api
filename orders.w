@@ -86,4 +86,70 @@ interface IOrderStorage extends std.IResource {
       this.db.update(id, updatedItem);
     }
 }
+/***************************************************
+ * Create a OrderService Class with api endpoints
+ ***************************************************/
+pub class OrderService {
+  pub api: cloud.Api;
+  storage: IOrderStorage;
+  prodStorage: product.IProductStorage;
+  counter: cloud.Counter;
+  queue: cloud.Queue;
+  
+  
+  new(storage: IOrderStorage, prodStore: product.IProductStorage, queue: cloud.Queue) {
+    this.api = new cloud.Api({
+      cors: true,
+      corsOptions: {
+        allowHeaders: ["*"],
+        allowMethods: [http.HttpMethod.POST],
+      },
+    }) as "orders api";
+
+    this.storage = storage;
+    this.prodStorage = prodStore;
+    this.counter = new cloud.Counter();
+    this.queue = queue;
+
+    // API endpoints
+    this.api.post("/order/:id/:qty", inflight (req): cloud.ApiResponse => {
+      if let body = req.body {
+        let id = "{this.counter.inc()}";
+        let prodId = req.vars.get("id");
+        let orderQty = req.vars.get("qty");
+        this.storage.add(id, {id: id, qty: num.fromStr(orderQty), prodId: prodId, status: "PENDING"});
+        log("Sending to queue");
+        queue.push(Json.stringify({
+                id: id,
+                prodId: prodId,
+                orderQty: orderQty
+              }));
+              log("Queue recieved");
+        return {
+          status:201,
+          body: prodId
+        };
+      } else {
+        return {
+          status: 400,
+        };
+      }
+    });
+
+    this.api.get("/order/:id", inflight (req): cloud.ApiResponse => {
+        let id = req.vars.get("id");
+        let order = this.storage.get(id);
+        return {
+          status:200,
+          body: Json.stringify(order)
+        };
+    });
+
+    this.api.get("/orders", inflight (req): cloud.ApiResponse => {
+        let order = this.storage.list();
+        return {
+          status:200,
+          body: Json.stringify(order)
+        };
+    });
 
