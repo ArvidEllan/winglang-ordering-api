@@ -26,3 +26,12 @@ struct Order {
   qty: num;
   status: str;
 }
+/*************************************************************************
+ * Define Order interface
+ *************************************************************************/
+interface IOrderStorage extends std.IResource {
+  inflight add(id: str, j: Json): void;
+  inflight get(id: str): Order?;
+  inflight list(): Array<Json>?;
+  inflight updateOrderStatus(id: str, status: str): void;
+}
